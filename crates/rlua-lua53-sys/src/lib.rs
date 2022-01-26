@@ -280,3 +280,16 @@ pub unsafe fn lua_upvalueindex(index: c_int) -> i32 {
 pub unsafe fn lua_call(state: *mut lua_State, nargs: c_int, nresults: c_int) {
     lua_callk(state, nargs, nresults, 0, None)
 }
+
+// Eris constants
+pub use {
+    bindings::ERIS_VERSION_MAJOR, bindings::ERIS_VERSION_MINOR, bindings::ERIS_VERSION_NUM,
+    bindings::ERIS_VERSION_RELEASE,
+};
+
+// Eris API
+pub use {
+    bindings::eris_dump, bindings::eris_get_setting, bindings::eris_persist,
+    bindings::eris_set_setting, bindings::eris_undump, bindings::eris_unpersist,
+    bindings::luaopen_eris,
+};

@@ -14,7 +14,7 @@ license = "MIT"
 circle-ci = { repository = "amethyst/rlua", branch = "master" }
 
 [features]
-default=["builtin-lua54"]
+default=["builtin-lua53"]
 builtin-lua54=["rlua-lua54-sys"]
 builtin-lua53=["rlua-lua53-sys"]
 builtin-lua51=["rlua-lua51-sys"]

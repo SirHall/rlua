@@ -4,7 +4,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let lua_folder = "lua-5.3.6";
+    let lua_folder = "lua-5.3.5";
     let wrapper_h = "wrapper_lua53.h";
 
     let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
@@ -68,7 +68,8 @@ fn main() {
             .file(lua_dir.join("lundump.c"))
             .file(lua_dir.join("lutf8lib.c"))
             .file(lua_dir.join("lvm.c"))
-            .file(lua_dir.join("lzio.c"));
+            .file(lua_dir.join("lzio.c"))
+            .file(lua_dir.join("eris.c"));
 
         cc_config_build
             .out_dir(dst.join("lib"))

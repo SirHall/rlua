@@ -277,8 +277,6 @@ static int io_popen (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
   LStream *p = newprefile(L);
-  luaL_argcheck(L, ((mode[0] == 'r' || mode[0] == 'w') && mode[1] == '\0'),
-                   2, "invalid mode");
   p->f = l_popen(L, filename, mode);
   p->closef = &io_pclose;
   return (p->f == NULL) ? luaL_fileresult(L, 0, filename) : 1;
@@ -774,5 +772,21 @@ LUAMOD_API int luaopen_io (lua_State *L) {
   createstdfile(L, stdout, IO_OUTPUT, "stdout");
   createstdfile(L, stderr, NULL, "stderr");
   return 1;
+}
+
+
+void eris_permiolib(lua_State *L, int forUnpersist) {
+  luaL_checktype(L, -1, LUA_TTABLE);
+  luaL_checkstack(L, 2, NULL);
+
+  if (forUnpersist) {
+    lua_pushstring(L, "__eris.iolib_io_readline");
+    lua_pushcfunction(L, io_readline);
+  }
+  else {
+    lua_pushcfunction(L, io_readline);
+    lua_pushstring(L, "__eris.iolib_io_readline");
+  }
+  lua_rawset(L, -3);
 }
 

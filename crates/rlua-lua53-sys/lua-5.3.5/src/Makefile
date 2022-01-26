@@ -1,4 +1,4 @@
-# Makefile for building Lua
+# Makefile for building Lua+Eris, based on the original Lua Makefile.
 # See ../doc/readme.html for installation and customization instructions.
 
 # == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
@@ -22,7 +22,7 @@ SYSLIBS=
 MYCFLAGS=
 MYLDFLAGS=
 MYLIBS=
-MYOBJS=
+MYOBJS=eris.o
 
 # == END OF USER SETTINGS -- NO NEED TO CHANGE ANYTHING BELOW THIS LINE =======
 
@@ -42,8 +42,14 @@ LUA_O=	lua.o
 LUAC_T=	luac
 LUAC_O=	luac.o
 
-ALL_O= $(BASE_O) $(LUA_O) $(LUAC_O)
-ALL_T= $(LUA_A) $(LUA_T) $(LUAC_T)
+TESTP_T= ../test/persist
+TESTP_O= ../test/persist.o
+
+TESTUP_T= ../test/unpersist
+TESTUP_O= ../test/unpersist.o
+
+ALL_O= $(BASE_O) $(LUA_O) $(LUAC_O) $(TESTP_O) $(TESTUP_O)
+ALL_T= $(LUA_A) $(LUA_T) $(LUAC_T) $(TESTP_T) $(TESTUP_T)
 ALL_A= $(LUA_A)
 
 # Targets start here.
@@ -64,6 +70,18 @@ $(LUA_T): $(LUA_O) $(LUA_A)
 
 $(LUAC_T): $(LUAC_O) $(LUA_A)
 	$(CC) -o $@ $(LDFLAGS) $(LUAC_O) $(LUA_A) $(LIBS)
+
+$(TESTP_T): $(TESTP_O) $(LUA_A)
+	$(CC) -o $@ $(LDFLAGS) $(TESTP_O) $(LUA_A) $(LIBS)
+
+$(TESTUP_T): $(TESTUP_O) $(LUA_A)
+	$(CC) -o $@ $(LDFLAGS) $(TESTUP_O) $(LUA_A) $(LIBS)
+
+$(TESTP_O): lua.h lualib.h lauxlib.h
+	$(CC) -c -o $@ ../test/persist.c -I../src
+
+$(TESTUP_O): ../test/unpersist.c lua.h lualib.h lauxlib.h
+	 $(CC) -c -o $@ ../test/unpersist.c -I../src
 
 clean:
 	$(RM) $(ALL_T) $(ALL_O)
@@ -102,7 +120,7 @@ c89:
 
 
 freebsd:
-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX -I/usr/include/edit" SYSLIBS="-Wl,-E -ledit" CC="cc"
+	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX -DLUA_USE_READLINE -I/usr/include/edit" SYSLIBS="-Wl,-E -ledit" CC="cc"
 
 generic: $(ALL)
 
@@ -117,6 +135,8 @@ mingw:
 	"AR=$(CC) -shared -o" "RANLIB=strip --strip-unneeded" \
 	"SYSCFLAGS=-DLUA_BUILD_AS_DLL" "SYSLIBS=" "SYSLDFLAGS=-s" lua.exe
 	$(MAKE) "LUAC_T=luac.exe" luac.exe
+	$(MAKE) "TESTP_T=../test/persist.exe" ../test/persist.exe
+	$(MAKE) "TESTUP_T=../test/unpersist.exe" ../test/unpersist.exe
 
 posix:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX"
@@ -193,5 +213,7 @@ lvm.o: lvm.c lprefix.h lua.h luaconf.h ldebug.h lstate.h lobject.h \
  ltable.h lvm.h
 lzio.o: lzio.c lprefix.h lua.h luaconf.h llimits.h lmem.h lstate.h \
  lobject.h ltm.h lzio.h
+eris.o: eris.c lua.h lauxlib.h lualib.h ldebug.h ldo.h lfunc.h lobject.h \
+ lstate.h lstring.h lzio.h eris.h
 
 # (end of Makefile)

@@ -3,22 +3,28 @@
 use rlua::{Error, Lua, MultiValue};
 use rustyline::Editor;
 
-fn main() {
+fn main()
+{
     Lua::new().context(|lua| {
         let mut editor = Editor::<()>::new();
 
-        loop {
+        loop
+        {
             let mut prompt = "> ";
             let mut line = String::new();
 
-            loop {
-                match editor.readline(prompt) {
+            loop
+            {
+                match editor.readline(prompt)
+                {
                     Ok(input) => line.push_str(&input),
                     Err(_) => return,
                 }
 
-                match lua.load(&line).eval::<MultiValue>() {
-                    Ok(values) => {
+                match lua.load(&line).eval::<MultiValue>()
+                {
+                    Ok(values) =>
+                    {
                         editor.add_history_entry(line);
                         println!(
                             "{}",
@@ -29,19 +35,21 @@ fn main() {
                                 .join("\t")
                         );
                         break;
-                    }
+                    },
                     Err(Error::SyntaxError {
                         incomplete_input: true,
                         ..
-                    }) => {
+                    }) =>
+                    {
                         // continue reading input and append it to `line`
                         line.push_str("\n"); // separate input lines
                         prompt = ">> ";
-                    }
-                    Err(e) => {
+                    },
+                    Err(e) =>
+                    {
                         eprintln!("error: {}", e);
                         break;
-                    }
+                    },
                 }
             }
         }

@@ -17,11 +17,10 @@ macro_rules! serde_lua_module {
     };
 }
 
-fn test(lua: &mut Lua) -> () {
-    ()
-}
+fn test(lua : &mut Lua) -> () { () }
 
-fn main() -> Result<(), String> {
+fn main() -> Result<(), String>
+{
     let mut lua = Lua::new_with(StdLib::ALL_NO_DEBUG);
 
     Ok(())

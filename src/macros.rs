@@ -1,17 +1,12 @@
 macro_rules! bug_msg {
     ($arg:expr) => {
-        concat!(
-            "rlua internal error: ",
-            $arg,
-            " (this is a bug, please file an issue)"
-        )
+        concat!("rlua internal error: ", $arg, " (this is a bug, please file an issue)")
     };
 }
 
 macro_rules! cstr {
     ($s:expr) => {
-        concat!($s, "\0") as *const str as *const [::std::os::raw::c_char]
-            as *const ::std::os::raw::c_char
+        concat!($s, "\0") as *const str as *const [::std::os::raw::c_char] as *const ::std::os::raw::c_char
     };
 }
 

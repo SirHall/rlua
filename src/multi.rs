@@ -6,56 +6,64 @@ use crate::context::Context;
 use crate::error::Result;
 use crate::value::{FromLua, FromLuaMulti, MultiValue, Nil, ToLua, ToLuaMulti};
 
-/// Result is convertible to `MultiValue` following the common Lua idiom of returning the result
-/// on success, or in the case of an error, returning `nil` and an error message.
-impl<'lua, T: ToLua<'lua>, E: ToLua<'lua>> ToLuaMulti<'lua> for StdResult<T, E> {
-    fn to_lua_multi(self, lua: Context<'lua>) -> Result<MultiValue<'lua>> {
+/// Result is convertible to `MultiValue` following the common Lua idiom of
+/// returning the result on success, or in the case of an error, returning `nil`
+/// and an error message.
+impl<'lua, T : ToLua<'lua>, E : ToLua<'lua>> ToLuaMulti<'lua> for StdResult<T, E>
+{
+    fn to_lua_multi(self, lua : Context<'lua>) -> Result<MultiValue<'lua>>
+    {
         let mut result = MultiValue::new();
 
-        match self {
+        match self
+        {
             Ok(v) => result.push_front(v.to_lua(lua)?),
-            Err(e) => {
+            Err(e) =>
+            {
                 result.push_front(e.to_lua(lua)?);
                 result.push_front(Nil);
-            }
+            },
         }
 
         Ok(result)
     }
 }
 
-impl<'lua, T: ToLua<'lua>> ToLuaMulti<'lua> for T {
-    fn to_lua_multi(self, lua: Context<'lua>) -> Result<MultiValue<'lua>> {
+impl<'lua, T : ToLua<'lua>> ToLuaMulti<'lua> for T
+{
+    fn to_lua_multi(self, lua : Context<'lua>) -> Result<MultiValue<'lua>>
+    {
         let mut v = MultiValue::new();
         v.push_front(self.to_lua(lua)?);
         Ok(v)
     }
 }
 
-impl<'lua, T: FromLua<'lua>> FromLuaMulti<'lua> for T {
-    fn from_lua_multi(mut values: MultiValue<'lua>, lua: Context<'lua>) -> Result<Self> {
+impl<'lua, T : FromLua<'lua>> FromLuaMulti<'lua> for T
+{
+    fn from_lua_multi(mut values : MultiValue<'lua>, lua : Context<'lua>) -> Result<Self>
+    {
         Ok(T::from_lua(values.pop_front().unwrap_or(Nil), lua)?)
     }
 }
 
-impl<'lua> ToLuaMulti<'lua> for MultiValue<'lua> {
-    fn to_lua_multi(self, _: Context<'lua>) -> Result<MultiValue<'lua>> {
-        Ok(self)
-    }
+impl<'lua> ToLuaMulti<'lua> for MultiValue<'lua>
+{
+    fn to_lua_multi(self, _ : Context<'lua>) -> Result<MultiValue<'lua>> { Ok(self) }
 }
 
-impl<'lua> FromLuaMulti<'lua> for MultiValue<'lua> {
-    fn from_lua_multi(values: MultiValue<'lua>, _: Context<'lua>) -> Result<Self> {
-        Ok(values)
-    }
+impl<'lua> FromLuaMulti<'lua> for MultiValue<'lua>
+{
+    fn from_lua_multi(values : MultiValue<'lua>, _ : Context<'lua>) -> Result<Self> { Ok(values) }
 }
 
 /// Wraps a variable number of `T`s.
 ///
-/// Can be used to work with variadic functions more easily. Using this type as the last argument of
-/// a Rust callback will accept any number of arguments from Lua and convert them to the type `T`
-/// using [`FromLua`]. `Variadic<T>` can also be returned from a callback, returning a variable
-/// number of values to Lua.
+/// Can be used to work with variadic functions more easily. Using this type as
+/// the last argument of a Rust callback will accept any number of arguments
+/// from Lua and convert them to the type `T` using [`FromLua`]. `Variadic<T>`
+/// can also be returned from a callback, returning a variable number of values
+/// to Lua.
 ///
 /// The [`MultiValue`] type is equivalent to `Variadic<Value>`.
 ///
@@ -65,9 +73,9 @@ impl<'lua> FromLuaMulti<'lua> for MultiValue<'lua> {
 /// # use rlua::{Lua, Variadic, Result};
 /// # fn main() -> Result<()> {
 /// # Lua::new().context(|lua_context| {
-/// let add = lua_context.create_function(|_, vals: Variadic<f64>| -> Result<f64> {
-///     Ok(vals.iter().sum())
-/// }).unwrap();
+/// let add = lua_context
+///     .create_function(|_, vals : Variadic<f64>| -> Result<f64> { Ok(vals.iter().sum()) })
+///     .unwrap();
 /// lua_context.globals().set("add", add)?;
 /// assert_eq!(lua_context.load("add(3, 2, 5)").eval::<f32>()?, 10.0);
 /// # Ok(())
@@ -80,56 +88,54 @@ impl<'lua> FromLuaMulti<'lua> for MultiValue<'lua> {
 #[derive(Debug, Clone)]
 pub struct Variadic<T>(Vec<T>);
 
-impl<T> Variadic<T> {
+impl<T> Variadic<T>
+{
     /// Creates an empty `Variadic` wrapper containing no values.
-    pub fn new() -> Variadic<T> {
-        Variadic(Vec::new())
-    }
+    pub fn new() -> Variadic<T> { Variadic(Vec::new()) }
 }
 
-impl<T> Default for Variadic<T> {
-    fn default() -> Variadic<T> {
-        Variadic::new()
-    }
+impl<T> Default for Variadic<T>
+{
+    fn default() -> Variadic<T> { Variadic::new() }
 }
 
-impl<T> FromIterator<T> for Variadic<T> {
-    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        Variadic(Vec::from_iter(iter))
-    }
+impl<T> FromIterator<T> for Variadic<T>
+{
+    fn from_iter<I : IntoIterator<Item = T>>(iter : I) -> Self { Variadic(Vec::from_iter(iter)) }
 }
 
-impl<T> IntoIterator for Variadic<T> {
+impl<T> IntoIterator for Variadic<T>
+{
     type Item = T;
     type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
+    fn into_iter(self) -> Self::IntoIter { self.0.into_iter() }
 }
 
-impl<T> Deref for Variadic<T> {
+impl<T> Deref for Variadic<T>
+{
     type Target = Vec<T>;
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+    fn deref(&self) -> &Self::Target { &self.0 }
 }
 
-impl<T> DerefMut for Variadic<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
+impl<T> DerefMut for Variadic<T>
+{
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
 }
 
-impl<'lua, T: ToLua<'lua>> ToLuaMulti<'lua> for Variadic<T> {
-    fn to_lua_multi(self, lua: Context<'lua>) -> Result<MultiValue<'lua>> {
+impl<'lua, T : ToLua<'lua>> ToLuaMulti<'lua> for Variadic<T>
+{
+    fn to_lua_multi(self, lua : Context<'lua>) -> Result<MultiValue<'lua>>
+    {
         self.0.into_iter().map(|e| e.to_lua(lua)).collect()
     }
 }
 
-impl<'lua, T: FromLua<'lua>> FromLuaMulti<'lua> for Variadic<T> {
-    fn from_lua_multi(values: MultiValue<'lua>, lua: Context<'lua>) -> Result<Self> {
+impl<'lua, T : FromLua<'lua>> FromLuaMulti<'lua> for Variadic<T>
+{
+    fn from_lua_multi(values : MultiValue<'lua>, lua : Context<'lua>) -> Result<Self>
+    {
         values
             .into_iter()
             .map(|e| T::from_lua(e, lua))

@@ -3,7 +3,8 @@ use std::sync::Arc;
 use rlua::{Error, Lua, Nil, UserData};
 
 #[test]
-fn test_memory_limit() {
+fn test_memory_limit()
+{
     let lua = Lua::new();
     let initial_memory = lua.used_memory();
     assert!(
@@ -24,8 +25,10 @@ fn test_memory_limit() {
         lua.gc_collect().expect("should collect garbage");
 
         lua.set_memory_limit(Some(initial_memory + 10000));
-        match f.call::<_, ()>(()) {
-            Err(Error::MemoryError(_)) => {}
+        match f.call::<_, ()>(())
+        {
+            Err(Error::MemoryError(_)) =>
+            {},
             something_else => panic!("did not trigger memory error: {:?}", something_else),
         }
 
@@ -35,7 +38,8 @@ fn test_memory_limit() {
 }
 
 #[test]
-fn test_gc_control() {
+fn test_gc_control()
+{
     let lua = Lua::new();
     #[cfg(any(rlua_lua53, rlua_lua54))]
     assert!(lua.gc_is_running());
@@ -52,10 +56,7 @@ fn test_gc_control() {
     lua.context(|ctx| {
         let rc = Arc::new(());
         ctx.globals()
-            .set(
-                "userdata",
-                ctx.create_userdata(MyUserdata(rc.clone())).unwrap(),
-            )
+            .set("userdata", ctx.create_userdata(MyUserdata(rc.clone())).unwrap())
             .unwrap();
         ctx.globals().set("userdata", Nil).unwrap();
 

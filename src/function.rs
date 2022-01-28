@@ -7,7 +7,13 @@ use crate::error::{Error, Result};
 use crate::ffi;
 use crate::types::LuaRef;
 use crate::util::{
-    assert_stack, check_stack, dump, error_traceback, pop_error, protect_lua_closure, rotate,
+    assert_stack,
+    check_stack,
+    dump,
+    error_traceback,
+    pop_error,
+    protect_lua_closure,
+    rotate,
     StackGuard,
 };
 use crate::value::{FromLuaMulti, MultiValue, ToLuaMulti};
@@ -16,7 +22,8 @@ use crate::value::{FromLuaMulti, MultiValue, ToLuaMulti};
 #[derive(Clone, Debug)]
 pub struct Function<'lua>(pub(crate) LuaRef<'lua>);
 
-impl<'lua> Function<'lua> {
+impl<'lua> Function<'lua>
+{
     /// Calls the function, passing `args` as function arguments.
     ///
     /// The function's return values are converted to the generic type `R`.
@@ -31,7 +38,7 @@ impl<'lua> Function<'lua> {
     /// # Lua::new().context(|lua_context| {
     /// let globals = lua_context.globals();
     ///
-    /// let tostring: Function = globals.get("tostring")?;
+    /// let tostring : Function = globals.get("tostring")?;
     ///
     /// assert_eq!(tostring.call::<_, String>(123)?, "123");
     ///
@@ -46,12 +53,15 @@ impl<'lua> Function<'lua> {
     /// # use rlua::{Lua, Function, Result};
     /// # fn main() -> Result<()> {
     /// # Lua::new().context(|lua_context| {
-    /// let sum: Function = lua_context.load(
-    ///     r#"
+    /// let sum : Function = lua_context
+    ///     .load(
+    ///         r#"
     ///         function(a, b)
     ///             return a + b
     ///         end
-    ///     "#).eval()?;
+    ///     "#,
+    ///     )
+    ///     .eval()?;
     ///
     /// assert_eq!(sum.call::<_, u32>((3, 4))?, 3 + 4);
     ///
@@ -59,7 +69,8 @@ impl<'lua> Function<'lua> {
     /// # })
     /// # }
     /// ```
-    pub fn call<A: ToLuaMulti<'lua>, R: FromLuaMulti<'lua>>(&self, args: A) -> Result<R> {
+    pub fn call<A : ToLuaMulti<'lua>, R : FromLuaMulti<'lua>>(&self, args : A) -> Result<R>
+    {
         let lua = self.0.lua;
 
         let args = args.to_lua_multi(lua)?;
@@ -72,17 +83,20 @@ impl<'lua> Function<'lua> {
             ffi::lua_pushcfunction(lua.state, Some(error_traceback));
             let stack_start = ffi::lua_gettop(lua.state);
             lua.push_ref(&self.0);
-            for arg in args {
+            for arg in args
+            {
                 lua.push_value(arg)?;
             }
             let ret = ffi::lua_pcall(lua.state, nargs, ffi::LUA_MULTRET, stack_start);
-            if ret != ffi::LUA_OK as i32 {
+            if ret != ffi::LUA_OK as i32
+            {
                 return Err(pop_error(lua.state, ret));
             }
             let nresults = ffi::lua_gettop(lua.state) - stack_start;
             let mut results = MultiValue::new();
             assert_stack(lua.state, 2);
-            for _ in 0..nresults {
+            for _ in 0..nresults
+            {
                 results.push_front(lua.pop_value());
             }
             ffi::lua_pop(lua.state, 1);
@@ -91,10 +105,11 @@ impl<'lua> Function<'lua> {
         R::from_lua_multi(results, lua)
     }
 
-    /// Returns a function that, when called, calls `self`, passing `args` as the first set of
-    /// arguments.
+    /// Returns a function that, when called, calls `self`, passing `args` as
+    /// the first set of arguments.
     ///
-    /// If any arguments are passed to the returned function, they will be passed after `args`.
+    /// If any arguments are passed to the returned function, they will be
+    /// passed after `args`.
     ///
     /// # Examples
     ///
@@ -102,11 +117,15 @@ impl<'lua> Function<'lua> {
     /// # use rlua::{Lua, Function, Result};
     /// # fn main() -> Result<()> {
     /// # Lua::new().context(|lua_context| {
-    /// let sum: Function = lua_context.load(r#"
+    /// let sum : Function = lua_context
+    ///     .load(
+    ///         r#"
     ///     function(a, b)
     ///         return a + b
     ///     end
-    /// "#).eval()?;
+    /// "#,
+    ///     )
+    ///     .eval()?;
     ///
     /// let bound_a = sum.bind(1)?;
     /// assert_eq!(bound_a.call::<_, u32>(2)?, 1 + 2);
@@ -118,8 +137,10 @@ impl<'lua> Function<'lua> {
     /// # })
     /// # }
     /// ```
-    pub fn bind<A: ToLuaMulti<'lua>>(&self, args: A) -> Result<Function<'lua>> {
-        unsafe extern "C" fn bind_call_impl(state: *mut ffi::lua_State) -> c_int {
+    pub fn bind<A : ToLuaMulti<'lua>>(&self, args : A) -> Result<Function<'lua>>
+    {
+        unsafe extern "C" fn bind_call_impl(state : *mut ffi::lua_State) -> c_int
+        {
             let nargs = ffi::lua_gettop(state);
             let nbinds = ffi::lua_tointeger(state, ffi::lua_upvalueindex(2)) as c_int;
             ffi::luaL_checkstack(state, nbinds + 2, ptr::null());
@@ -130,7 +151,8 @@ impl<'lua> Function<'lua> {
             ffi::lua_pushvalue(state, ffi::lua_upvalueindex(1));
             ffi::lua_replace(state, 1);
 
-            for i in 0..nbinds {
+            for i in 0..nbinds
+            {
                 ffi::lua_pushvalue(state, ffi::lua_upvalueindex(i + 3));
                 ffi::lua_replace(state, i + 2);
             }
@@ -144,7 +166,8 @@ impl<'lua> Function<'lua> {
         let args = args.to_lua_multi(lua)?;
         let nargs = args.len() as c_int;
 
-        if nargs + 2 > ffi::LUA_MAX_UPVALUES {
+        if nargs + 2 > ffi::LUA_MAX_UPVALUES
+        {
             return Err(Error::BindError);
         }
 
@@ -153,7 +176,8 @@ impl<'lua> Function<'lua> {
             check_stack(lua.state, nargs + 5)?;
             lua.push_ref(&self.0);
             ffi::lua_pushinteger(lua.state, nargs as ffi::lua_Integer);
-            for arg in args {
+            for arg in args
+            {
                 lua.push_value(arg)?;
             }
 
@@ -166,7 +190,8 @@ impl<'lua> Function<'lua> {
     }
 
     /// Dumps the compiled representation of the function into a binary blob,
-    /// which can later be loaded using the unsafe Chunk::into_function_allow_binary().
+    /// which can later be loaded using the unsafe
+    /// Chunk::into_function_allow_binary().
     ///
     /// # Examples
     ///
@@ -174,31 +199,34 @@ impl<'lua> Function<'lua> {
     /// # use rlua::{Lua, Function, Result};
     /// # fn main() -> Result<()> {
     /// # Lua::new().context(|lua_context| {
-    /// let add2: Function = lua_context.load(r#"
+    /// let add2 : Function = lua_context
+    ///     .load(
+    ///         r#"
     ///     function(a)
     ///         return a + 2
     ///     end
-    /// "#).eval()?;
+    /// "#,
+    ///     )
+    ///     .eval()?;
     ///
     /// let dumped = add2.dump()?;
     ///
-    /// let reloaded = unsafe {
-    ///     lua_context.load(&dumped)
-    ///                .into_function_allow_binary()?
-    /// };
-    /// assert_eq!(reloaded.call::<_, u32>(7)?, 7+2);
+    /// let reloaded = unsafe { lua_context.load(&dumped).into_function_allow_binary()? };
+    /// assert_eq!(reloaded.call::<_, u32>(7)?, 7 + 2);
     ///
     /// # Ok(())
     /// # })
     /// # }
     /// ```
-    pub fn dump(&self) -> Result<Vec<u8>> {
+    pub fn dump(&self) -> Result<Vec<u8>>
+    {
         unsafe extern "C" fn writer(
-            _state: *mut ffi::lua_State,
-            p: *const c_void,
-            sz: usize,
-            ud: *mut c_void,
-        ) -> c_int {
+            _state : *mut ffi::lua_State,
+            p : *const c_void,
+            sz : usize,
+            ud : *mut c_void,
+        ) -> c_int
+        {
             let input_slice = std::slice::from_raw_parts(p as *const u8, sz);
             let vec = &mut *(ud as *mut Vec<u8>);
             vec.extend_from_slice(input_slice);

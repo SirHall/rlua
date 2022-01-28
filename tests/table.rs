@@ -1,7 +1,8 @@
 use rlua::{Lua, Nil, Result, Table, Value};
 
 #[test]
-fn test_set_get() {
+fn test_set_get()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         globals.set("foo", "bar").unwrap();
@@ -12,13 +13,14 @@ fn test_set_get() {
 }
 
 #[test]
-fn test_table() {
+fn test_table()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
 
         globals.set("table", lua.create_table().unwrap()).unwrap();
-        let table1: Table = globals.get("table").unwrap();
-        let table2: Table = globals.get("table").unwrap();
+        let table1 : Table = globals.get("table").unwrap();
+        let table2 : Table = globals.get("table").unwrap();
 
         table1.set("foo", "bar").unwrap();
         table2.set("baz", "baf").unwrap();
@@ -42,53 +44,29 @@ fn test_table() {
 
         assert_eq!(table1.len().unwrap(), 5);
         assert_eq!(
-            table1
-                .clone()
-                .pairs()
-                .collect::<Result<Vec<(i64, i64)>>>()
-                .unwrap(),
+            table1.clone().pairs().collect::<Result<Vec<(i64, i64)>>>().unwrap(),
             vec![(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
         );
         assert_eq!(
-            table1
-                .clone()
-                .sequence_values()
-                .collect::<Result<Vec<i64>>>()
-                .unwrap(),
+            table1.clone().sequence_values().collect::<Result<Vec<i64>>>().unwrap(),
             vec![1, 2, 3, 4, 5]
         );
 
         assert_eq!(table2.len().unwrap(), 0);
         assert_eq!(
-            table2
-                .clone()
-                .pairs()
-                .collect::<Result<Vec<(i64, i64)>>>()
-                .unwrap(),
+            table2.clone().pairs().collect::<Result<Vec<(i64, i64)>>>().unwrap(),
             vec![]
         );
-        assert_eq!(
-            table2
-                .sequence_values()
-                .collect::<Result<Vec<i64>>>()
-                .unwrap(),
-            vec![]
-        );
+        assert_eq!(table2.sequence_values().collect::<Result<Vec<i64>>>().unwrap(), vec![]);
 
         // sequence_values should only iterate until the first border
         assert_eq!(
-            table3
-                .sequence_values()
-                .collect::<Result<Vec<i64>>>()
-                .unwrap(),
+            table3.sequence_values().collect::<Result<Vec<i64>>>().unwrap(),
             vec![1, 2]
         );
 
         globals
-            .set(
-                "table4",
-                lua.create_sequence_from(vec![1, 2, 3, 4, 5]).unwrap(),
-            )
+            .set("table4", lua.create_sequence_from(vec![1, 2, 3, 4, 5]).unwrap())
             .unwrap();
         let table4 = globals.get::<_, Table>("table4").unwrap();
         assert_eq!(
@@ -99,7 +77,8 @@ fn test_table() {
 }
 
 #[test]
-fn test_table_scope() {
+fn test_table_scope()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -112,7 +91,8 @@ fn test_table_scope() {
         .exec()
         .unwrap();
 
-        // Make sure that table gets do not borrow the table, but instead just borrow lua.
+        // Make sure that table gets do not borrow the table, but instead just borrow
+        // lua.
         let tin;
         {
             let touter = globals.get::<_, Table>("touter").unwrap();
@@ -126,32 +106,35 @@ fn test_table_scope() {
 }
 
 #[test]
-fn test_metatable() {
+fn test_metatable()
+{
     Lua::new().context(|lua| {
         let table = lua.create_table().unwrap();
         let metatable = lua.create_table().unwrap();
         metatable
-            .set(
-                "__index",
-                lua.create_function(|_, ()| Ok("index_value")).unwrap(),
-            )
+            .set("__index", lua.create_function(|_, ()| Ok("index_value")).unwrap())
             .unwrap();
         table.set_metatable(Some(metatable));
         assert_eq!(table.get::<_, String>("any_key").unwrap(), "index_value");
-        match table.raw_get::<_, Value>("any_key").unwrap() {
-            Nil => {}
+        match table.raw_get::<_, Value>("any_key").unwrap()
+        {
+            Nil =>
+            {},
             _ => panic!(),
         }
         table.set_metatable(None);
-        match table.get::<_, Value>("any_key").unwrap() {
-            Nil => {}
+        match table.get::<_, Value>("any_key").unwrap()
+        {
+            Nil =>
+            {},
             _ => panic!(),
         };
     });
 }
 
 #[test]
-fn test_table_error() {
+fn test_table_error()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -173,7 +156,7 @@ fn test_table_error() {
         .exec()
         .unwrap();
 
-        let bad_table: Table = globals.get("table").unwrap();
+        let bad_table : Table = globals.get("table").unwrap();
         assert!(bad_table.set(1, 1).is_err());
         assert!(bad_table.get::<_, i32>(1).is_err());
         assert!(bad_table.len().is_err());

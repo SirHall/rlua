@@ -6,14 +6,15 @@ use std::sync::{Arc, Mutex};
 use rlua::{Error, HookTriggers, Lua, Value};
 
 #[test]
-fn line_counts() {
+fn line_counts()
+{
     let output = Arc::new(Mutex::new(Vec::new()));
     let hook_output = output.clone();
 
     let lua = Lua::new();
     lua.set_hook(
         HookTriggers {
-            every_line: true,
+            every_line : true,
             ..Default::default()
         },
         move |_lua, debug| {
@@ -38,14 +39,15 @@ fn line_counts() {
 }
 
 #[test]
-fn function_calls() {
+fn function_calls()
+{
     let output = Arc::new(Mutex::new(Vec::new()));
     let hook_output = output.clone();
 
     let lua = Lua::new();
     lua.set_hook(
         HookTriggers {
-            on_calls: true,
+            on_calls : true,
             ..Default::default()
         },
         move |_lua, debug| {
@@ -78,27 +80,24 @@ fn function_calls() {
 }
 
 #[test]
-fn error_within_hook() {
+fn error_within_hook()
+{
     let lua = Lua::new();
     lua.set_hook(
         HookTriggers {
-            every_line: true,
+            every_line : true,
             ..Default::default()
         },
-        |_lua, _debug| {
-            Err(Error::RuntimeError(
-                "Something happened in there!".to_string(),
-            ))
-        },
+        |_lua, _debug| Err(Error::RuntimeError("Something happened in there!".to_string())),
     );
 
-    let err = lua.context(|lua| {
-        lua.load("x = 1")
-            .exec()
-            .expect_err("panic didn't propagate")
-    });
-    match err {
-        Error::CallbackError { cause, .. } => match cause.deref() {
+    let err = lua.context(|lua| lua.load("x = 1").exec().expect_err("panic didn't propagate"));
+    match err
+    {
+        Error::CallbackError {
+            cause, ..
+        } => match cause.deref()
+        {
             Error::RuntimeError(s) => assert_eq!(s, "Something happened in there!"),
             _ => panic!("wrong callback error kind caught"),
         },
@@ -107,20 +106,24 @@ fn error_within_hook() {
 }
 
 #[test]
-fn limit_execution_instructions() {
+fn limit_execution_instructions()
+{
     let lua = Lua::new();
     let mut max_instructions = 10000;
 
     lua.set_hook(
         HookTriggers {
-            every_nth_instruction: Some(30),
+            every_nth_instruction : Some(30),
             ..Default::default()
         },
         move |_lua, _debug| {
             max_instructions -= 30;
-            if max_instructions < 0 {
+            if max_instructions < 0
+            {
                 Err(Error::RuntimeError("time's up".to_string()))
-            } else {
+            }
+            else
+            {
                 Ok(())
             }
         },
@@ -145,12 +148,13 @@ fn limit_execution_instructions() {
 }
 
 #[test]
-fn hook_removal() {
+fn hook_removal()
+{
     let lua = Lua::new();
 
     lua.set_hook(
         HookTriggers {
-            every_nth_instruction: Some(1),
+            every_nth_instruction : Some(1),
             ..Default::default()
         },
         |_lua, _debug| {
@@ -172,7 +176,8 @@ fn hook_removal() {
 }
 
 #[test]
-fn hook_swap_within_hook() {
+fn hook_swap_within_hook()
+{
     thread_local! {
         static TL_LUA: RefCell<Option<Lua>> = RefCell::new(None);
     }
@@ -184,7 +189,7 @@ fn hook_swap_within_hook() {
     TL_LUA.with(|tl| {
         tl.borrow().as_ref().unwrap().set_hook(
             HookTriggers {
-                every_line: true,
+                every_line : true,
                 ..Default::default()
             },
             move |lua, _debug| {
@@ -192,7 +197,7 @@ fn hook_swap_within_hook() {
                 TL_LUA.with(|tl| {
                     tl.borrow().as_ref().unwrap().set_hook(
                         HookTriggers {
-                            every_line: true,
+                            every_line : true,
                             ..Default::default()
                         },
                         move |lua, _debug| {

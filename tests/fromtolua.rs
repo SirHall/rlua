@@ -1,7 +1,8 @@
 use rlua::Lua;
 
 #[test]
-fn test_to_array() {
+fn test_to_array()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -25,7 +26,8 @@ fn test_to_array() {
 }
 
 #[test]
-fn test_from_array() {
+fn test_from_array()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         globals.set("a", [1usize, 2, 3]).unwrap();

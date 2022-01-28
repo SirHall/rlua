@@ -5,15 +5,27 @@ use std::sync::Arc;
 use std::{error, f32, f64, fmt};
 
 use rlua::{
-    Error, ExternalError, Function, InitFlags, Lua, Nil, Result, StdLib, String, Table, UserData,
-    Value, Variadic,
+    Error,
+    ExternalError,
+    Function,
+    InitFlags,
+    Lua,
+    Nil,
+    Result,
+    StdLib,
+    String,
+    Table,
+    UserData,
+    Value,
+    Variadic,
 };
 
 #[test]
-fn test_load() {
+fn test_load()
+{
     Lua::new().context(|lua| {
         let func = lua.load("return 1+2").into_function().unwrap();
-        let result: i32 = func.call(()).unwrap();
+        let result : i32 = func.call(()).unwrap();
         assert_eq!(result, 3);
 
         assert!(lua.load("§$%§&$%&").exec().is_err());
@@ -21,11 +33,14 @@ fn test_load() {
 }
 
 #[test]
-fn test_debug() {
+fn test_debug()
+{
     let lua = unsafe { Lua::new_with_debug() };
     lua.context(|lua| {
-        match lua.load("debug").eval().unwrap() {
-            Value::Table(_) => {}
+        match lua.load("debug").eval().unwrap()
+        {
+            Value::Table(_) =>
+            {},
             val => panic!("Expected table for debug library, got {:#?}", val),
         }
         let traceback_output = lua.load("debug.traceback()").eval::<String>().unwrap();
@@ -38,12 +53,11 @@ fn test_debug() {
 
 #[test]
 #[should_panic]
-fn test_new_with_debug_panic() {
-    let _lua = Lua::new_with(StdLib::DEBUG);
-}
+fn test_new_with_debug_panic() { let _lua = Lua::new_with(StdLib::DEBUG); }
 
 #[test]
-fn test_exec() {
+fn test_exec()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -55,7 +69,7 @@ fn test_exec() {
         .unwrap();
         assert_eq!(globals.get::<_, String>("res").unwrap(), "foobar");
 
-        let module: Table = lua
+        let module : Table = lua
             .load(
                 r#"
                     local module = {}
@@ -82,26 +96,27 @@ fn test_exec() {
 }
 
 #[test]
-fn test_eval() {
+fn test_eval()
+{
     Lua::new().context(|lua| {
         assert_eq!(lua.load("1 + 1").eval::<i32>().unwrap(), 2);
         assert_eq!(lua.load("false == false").eval::<bool>().unwrap(), true);
         assert_eq!(lua.load("return 1 + 2").eval::<i32>().unwrap(), 3);
-        match lua.load("if true then").eval::<()>() {
+        match lua.load("if true then").eval::<()>()
+        {
             Err(Error::SyntaxError {
                 incomplete_input: true,
                 ..
-            }) => {}
-            r => panic!(
-                "expected SyntaxError with incomplete_input=true, got {:?}",
-                r
-            ),
+            }) =>
+            {},
+            r => panic!("expected SyntaxError with incomplete_input=true, got {:?}", r),
         }
     });
 }
 
 #[test]
-fn test_lua_multi() {
+fn test_lua_multi()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -131,7 +146,8 @@ fn test_lua_multi() {
 }
 
 #[test]
-fn test_coercion() {
+fn test_coercion()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -151,24 +167,21 @@ fn test_coercion() {
 }
 
 #[test]
-fn test_error() {
+fn test_error()
+{
     #[derive(Debug)]
     pub struct TestError;
 
-    impl fmt::Display for TestError {
-        fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-            write!(fmt, "test error")
-        }
+    impl fmt::Display for TestError
+    {
+        fn fmt(&self, fmt : &mut fmt::Formatter) -> fmt::Result { write!(fmt, "test error") }
     }
 
-    impl error::Error for TestError {
-        fn description(&self) -> &str {
-            "test error"
-        }
+    impl error::Error for TestError
+    {
+        fn description(&self) -> &str { "test error" }
 
-        fn cause(&self) -> Option<&dyn error::Error> {
-            None
-        }
+        fn cause(&self) -> Option<&dyn error::Error> { None }
     }
 
     Lua::new().context(|lua| {
@@ -230,9 +243,7 @@ fn test_error() {
         let rust_error_function = lua
             .create_function(|_, ()| -> Result<()> { Err(TestError.to_lua_err()) })
             .unwrap();
-        globals
-            .set("rust_error_function", rust_error_function)
-            .unwrap();
+        globals.set("rust_error_function", rust_error_function).unwrap();
 
         let no_error = globals.get::<_, Function>("no_error").unwrap();
         let lua_error = globals.get::<_, Function>("lua_error").unwrap();
@@ -243,40 +254,49 @@ fn test_error() {
         let understand_recursion = globals.get::<_, Function>("understand_recursion").unwrap();
 
         assert!(no_error.call::<_, ()>(()).is_ok());
-        match lua_error.call::<_, ()>(()) {
-            Err(Error::RuntimeError(_)) => {}
+        match lua_error.call::<_, ()>(())
+        {
+            Err(Error::RuntimeError(_)) =>
+            {},
             Err(_) => panic!("error is not RuntimeError kind"),
             _ => panic!("error not returned"),
         }
-        match rust_error.call::<_, ()>(()) {
-            Err(Error::CallbackError { .. }) => {}
+        match rust_error.call::<_, ()>(())
+        {
+            Err(Error::CallbackError {
+                ..
+            }) =>
+            {},
             Err(_) => panic!("error is not CallbackError kind"),
             _ => panic!("error not returned"),
         }
 
-        match return_error.call::<_, Value>(()) {
-            Ok(Value::Error(_)) => {}
+        match return_error.call::<_, Value>(())
+        {
+            Ok(Value::Error(_)) =>
+            {},
             e => panic!("Value::Error not returned: got {:?}", e),
         }
 
         assert!(return_string_error.call::<_, Error>(()).is_ok());
 
-        match lua
-            .load("if youre happy and you know it syntax error")
-            .exec()
+        match lua.load("if youre happy and you know it syntax error").exec()
         {
             Err(Error::SyntaxError {
                 incomplete_input: false,
                 ..
-            }) => {}
+            }) =>
+            {},
             Err(_) => panic!("error is not LuaSyntaxError::Syntax kind"),
             _ => panic!("error not returned"),
         }
-        match lua.load("function i_will_finish_what_i()").exec() {
+        match lua.load("function i_will_finish_what_i()").exec()
+        {
             Err(Error::SyntaxError {
                 incomplete_input: true,
                 ..
-            }) => {}
+            }) =>
+            {},
             Err(_) => panic!("error is not LuaSyntaxError::IncompleteStatement kind"),
             _ => panic!("error not returned"),
         }
@@ -307,7 +327,8 @@ fn test_error() {
 
             rust_panic.call::<_, ()>(())
         })
-    }) {
+    })
+    {
         Ok(Ok(_)) => panic!("no panic was detected, pcall caught it!"),
         Ok(Err(e)) => panic!("error during panic test {:?}", e),
         Err(p) => assert!(*p.downcast::<&str>().unwrap() == "test_panic"),
@@ -334,7 +355,8 @@ fn test_error() {
 
             rust_panic.call::<_, ()>(())
         })
-    }) {
+    })
+    {
         Ok(Ok(_)) => panic!("no panic was detected, xpcall caught it!"),
         Ok(Err(e)) => panic!("error during panic test {:?}", e),
         Err(p) => assert!(*p.downcast::<&str>().unwrap() == "test_panic"),
@@ -344,71 +366,70 @@ fn test_error() {
 // Test that skipping the pcall/xpcall wrappers works.
 // TODO: The only way to test that the behaviour is correct is to
 // cause it to abort().
-/*
-#[test]
-fn test_error_nopcall_wrap() {
-    match catch_unwind(|| -> Result<()> {
-        unsafe {
-            Lua::unsafe_new_with_flags(StdLib::ALL, InitFlags::DEFAULT - InitFlags::PCALL_WRAPPERS).context(|lua| {
-                let globals = lua.globals();
-
-                lua.load(
-                    r#"
-                        function rust_panic()
-                            pcall(function () rust_panic_function() end)
-                        end
-                    "#,
-                )
-                .exec()?;
-                let rust_panic_function = lua
-                    .create_function(|_, ()| -> Result<()> { panic!("test_panic") })
-                    .unwrap();
-                globals.set("rust_panic_function", rust_panic_function)?;
-
-                let rust_panic = globals.get::<_, Function>("rust_panic")?;
-
-                rust_panic.call::<_, ()>(())
-            })
-        }
-    }) {
-        Ok(Ok(_)) => panic!("no panic was detected, pcall caught it!"),
-        Ok(Err(e)) => panic!("error during panic test {:?}", e),
-        Err(p) => assert!(*p.downcast::<&str>().unwrap() == "test_panic"),
-    };
-
-    match catch_unwind(|| -> Result<()> {
-        unsafe {
-            Lua::unsafe_new_with_flags(StdLib::ALL, InitFlags::DEFAULT - InitFlags::PCALL_WRAPPERS).context(|lua| {
-                let globals = lua.globals();
-
-                lua.load(
-                    r#"
-                        function rust_panic()
-                            xpcall(function() rust_panic_function() end, function() end)
-                        end
-                    "#,
-                )
-                .exec()?;
-                let rust_panic_function = lua
-                    .create_function(|_, ()| -> Result<()> { panic!("test_panic") })
-                    .unwrap();
-                globals.set("rust_panic_function", rust_panic_function)?;
-
-                let rust_panic = globals.get::<_, Function>("rust_panic")?;
-
-                rust_panic.call::<_, ()>(())
-            })
-        }
-    }) {
-        Ok(Ok(_)) => panic!("no panic was detected, xpcall caught it!"),
-        Ok(Err(e)) => panic!("error during panic test {:?}", e),
-        Err(p) => assert!(*p.downcast::<&str>().unwrap() == "test_panic"),
-    };
-}
-*/
+// #[test]
+// fn test_error_nopcall_wrap() {
+// match catch_unwind(|| -> Result<()> {
+// unsafe {
+// Lua::unsafe_new_with_flags(StdLib::ALL, InitFlags::DEFAULT -
+// InitFlags::PCALL_WRAPPERS).context(|lua| { let globals = lua.globals();
+//
+// lua.load(
+// r#"
+// function rust_panic()
+// pcall(function () rust_panic_function() end)
+// end
+// "#,
+// )
+// .exec()?;
+// let rust_panic_function = lua
+// .create_function(|_, ()| -> Result<()> { panic!("test_panic") })
+// .unwrap();
+// globals.set("rust_panic_function", rust_panic_function)?;
+//
+// let rust_panic = globals.get::<_, Function>("rust_panic")?;
+//
+// rust_panic.call::<_, ()>(())
+// })
+// }
+// }) {
+// Ok(Ok(_)) => panic!("no panic was detected, pcall caught it!"),
+// Ok(Err(e)) => panic!("error during panic test {:?}", e),
+// Err(p) => assert!(*p.downcast::<&str>().unwrap() == "test_panic"),
+// };
+//
+// match catch_unwind(|| -> Result<()> {
+// unsafe {
+// Lua::unsafe_new_with_flags(StdLib::ALL, InitFlags::DEFAULT -
+// InitFlags::PCALL_WRAPPERS).context(|lua| { let globals = lua.globals();
+//
+// lua.load(
+// r#"
+// function rust_panic()
+// xpcall(function() rust_panic_function() end, function() end)
+// end
+// "#,
+// )
+// .exec()?;
+// let rust_panic_function = lua
+// .create_function(|_, ()| -> Result<()> { panic!("test_panic") })
+// .unwrap();
+// globals.set("rust_panic_function", rust_panic_function)?;
+//
+// let rust_panic = globals.get::<_, Function>("rust_panic")?;
+//
+// rust_panic.call::<_, ()>(())
+// })
+// }
+// }) {
+// Ok(Ok(_)) => panic!("no panic was detected, xpcall caught it!"),
+// Ok(Err(e)) => panic!("error during panic test {:?}", e),
+// Err(p) => assert!(*p.downcast::<&str>().unwrap() == "test_panic"),
+// };
+// }
 
 #[test]
-fn test_load_wrappers() {
+fn test_load_wrappers()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -468,13 +489,10 @@ fn test_load_wrappers() {
 }
 
 #[test]
-fn test_no_load_wrappers() {
+fn test_no_load_wrappers()
+{
     unsafe {
-        Lua::unsafe_new_with_flags(
-            StdLib::ALL_NO_DEBUG,
-            InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS,
-        )
-        .context(|lua| {
+        Lua::unsafe_new_with_flags(StdLib::ALL_NO_DEBUG, InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS).context(|lua| {
             let globals = lua.globals();
             lua.load(
                 r#"
@@ -528,7 +546,8 @@ fn test_no_load_wrappers() {
 }
 
 #[test]
-fn test_loadfile_wrappers() {
+fn test_loadfile_wrappers()
+{
     let mut tmppath = std::env::temp_dir();
     tmppath.push("test_loadfile_wrappers.lua");
 
@@ -582,23 +601,18 @@ fn test_loadfile_wrappers() {
 }
 
 #[test]
-fn test_no_loadfile_wrappers() {
+fn test_no_loadfile_wrappers()
+{
     let mut tmppath = std::env::temp_dir();
     let mut tmppath2 = tmppath.clone();
     tmppath.push("test_no_loadfile_wrappers.lua");
     tmppath2.push("test_no_loadfile_wrappers2.lua");
 
     unsafe {
-        Lua::unsafe_new_with_flags(
-            StdLib::ALL_NO_DEBUG,
-            InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS,
-        )
-        .context(|lua| {
+        Lua::unsafe_new_with_flags(StdLib::ALL_NO_DEBUG, InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS).context(|lua| {
             let globals = lua.globals();
             globals.set("filename", tmppath.to_str().unwrap()).unwrap();
-            globals
-                .set("filename2", tmppath2.to_str().unwrap())
-                .unwrap();
+            globals.set("filename2", tmppath2.to_str().unwrap()).unwrap();
             lua.load(
                 r#"
                 x = 0
@@ -646,7 +660,8 @@ fn test_no_loadfile_wrappers() {
 }
 
 #[test]
-fn test_dofile_wrappers() {
+fn test_dofile_wrappers()
+{
     let mut tmppath = std::env::temp_dir();
     tmppath.push("test_dofile_wrappers.lua");
 
@@ -700,69 +715,70 @@ fn test_dofile_wrappers() {
 }
 
 #[test]
-fn test_no_dofile_wrappers() {
+fn test_no_dofile_wrappers()
+{
     let mut tmppath = std::env::temp_dir();
     tmppath.push("test_no_dofile_wrappers.lua");
 
     unsafe {
-        Lua::unsafe_new_with_flags(
-            StdLib::ALL_NO_DEBUG,
-            InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS,
-        )
-        .context(|lua| {
-            let globals = lua.globals();
-            globals.set("filename", tmppath.to_str().unwrap()).unwrap();
-            lua.load(
-                r#"
+        Lua::unsafe_new_with_flags(StdLib::ALL_NO_DEBUG, InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS).context(
+            |lua| {
+                let globals = lua.globals();
+                globals.set("filename", tmppath.to_str().unwrap()).unwrap();
+                lua.load(
+                    r#"
                     x = 0
                     function incx()
                         x = x + 1
                     end
                     binchunk = string.dump(incx)
                 "#,
-            )
-            .exec()
-            .unwrap();
-            assert_eq!(globals.get::<_, u32>("x").unwrap(), 0);
-            let binchunk = globals.get::<_, BString>("binchunk").unwrap();
+                )
+                .exec()
+                .unwrap();
+                assert_eq!(globals.get::<_, u32>("x").unwrap(), 0);
+                let binchunk = globals.get::<_, BString>("binchunk").unwrap();
 
-            lua.load(
-                r#"
+                lua.load(
+                    r#"
                     incx()
                 "#,
-            )
-            .exec()
-            .unwrap();
-            assert_eq!(globals.get::<_, u32>("x").unwrap(), 1);
-            std::fs::write(&tmppath, binchunk).unwrap();
-            lua.load(
-                r#"
+                )
+                .exec()
+                .unwrap();
+                assert_eq!(globals.get::<_, u32>("x").unwrap(), 1);
+                std::fs::write(&tmppath, binchunk).unwrap();
+                lua.load(
+                    r#"
                     ok, ret = pcall(dofile, filename)
                     assert(ok)
                 "#,
-            )
-            .exec()
-            .unwrap();
-            assert_eq!(globals.get::<_, u32>("x").unwrap(), 2);
-            std::fs::write(&tmppath, "x = x + 4").unwrap();
-            lua.load(
-                r#"
+                )
+                .exec()
+                .unwrap();
+                assert_eq!(globals.get::<_, u32>("x").unwrap(), 2);
+                std::fs::write(&tmppath, "x = x + 4").unwrap();
+                lua.load(
+                    r#"
                     ok, ret = pcall(dofile, filename)
                     assert(ok)
                 "#,
-            )
-            .exec()
-            .unwrap();
-            assert_eq!(globals.get::<_, u32>("x").unwrap(), 6);
-        });
+                )
+                .exec()
+                .unwrap();
+                assert_eq!(globals.get::<_, u32>("x").unwrap(), 6);
+            },
+        );
     }
 }
 
 #[test]
-fn test_loadstring_wrappers() {
+fn test_loadstring_wrappers()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
-        if globals.get::<_, Function>("loadstring").is_err() {
+        if globals.get::<_, Function>("loadstring").is_err()
+        {
             // Loadstring is not present in Lua 5.4, and only with a
             // compatibility mode in Lua 5.3.
             return;
@@ -813,15 +829,13 @@ fn test_loadstring_wrappers() {
 }
 
 #[test]
-fn test_no_loadstring_wrappers() {
+fn test_no_loadstring_wrappers()
+{
     unsafe {
-        Lua::unsafe_new_with_flags(
-            StdLib::ALL_NO_DEBUG,
-            InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS,
-        )
-        .context(|lua| {
+        Lua::unsafe_new_with_flags(StdLib::ALL_NO_DEBUG, InitFlags::DEFAULT - InitFlags::LOAD_WRAPPERS).context(|lua| {
             let globals = lua.globals();
-            if globals.get::<_, Function>("loadstring").is_err() {
+            if globals.get::<_, Function>("loadstring").is_err()
+            {
                 // Loadstring is not present in Lua 5.4, and only with a
                 // compatibility mode in Lua 5.3.
                 return;
@@ -866,7 +880,8 @@ fn test_no_loadstring_wrappers() {
 }
 
 #[test]
-fn test_default_loadlib() {
+fn test_default_loadlib()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         let package = globals.get::<_, Table>("package").unwrap();
@@ -884,43 +899,37 @@ fn test_default_loadlib() {
 }
 
 #[test]
-fn test_no_remove_loadlib() {
+fn test_no_remove_loadlib()
+{
     unsafe {
-        Lua::unsafe_new_with_flags(
-            StdLib::ALL_NO_DEBUG,
-            InitFlags::DEFAULT - InitFlags::REMOVE_LOADLIB,
-        )
-        .context(|lua| {
-            let globals = lua.globals();
-            let package = globals.get::<_, Table>("package").unwrap();
-            let _loadlib = package.get::<_, Function>("loadlib").unwrap();
+        Lua::unsafe_new_with_flags(StdLib::ALL_NO_DEBUG, InitFlags::DEFAULT - InitFlags::REMOVE_LOADLIB).context(
+            |lua| {
+                let globals = lua.globals();
+                let package = globals.get::<_, Table>("package").unwrap();
+                let _loadlib = package.get::<_, Function>("loadlib").unwrap();
 
-            lua.load(
-                r#"
+                lua.load(
+                    r#"
                 assert(#(package.loaders or package.searchers) == 4)
                 "#,
-            )
-            .exec()
-            .unwrap();
-        });
+                )
+                .exec()
+                .unwrap();
+            },
+        );
     }
 }
 
 #[test]
-fn test_result_conversions() {
+fn test_result_conversions()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
 
         let err = lua
-            .create_function(|_, ()| {
-                Ok(Err::<String, _>(
-                    "only through failure can we succeed".to_lua_err(),
-                ))
-            })
+            .create_function(|_, ()| Ok(Err::<String, _>("only through failure can we succeed".to_lua_err())))
             .unwrap();
-        let ok = lua
-            .create_function(|_, ()| Ok(Ok::<_, Error>("!".to_owned())))
-            .unwrap();
+        let ok = lua.create_function(|_, ()| Ok(Ok::<_, Error>("!".to_owned()))).unwrap();
 
         globals.set("err", err).unwrap();
         globals.set("ok", ok).unwrap();
@@ -942,7 +951,8 @@ fn test_result_conversions() {
 }
 
 #[test]
-fn test_num_conversion() {
+fn test_num_conversion()
+{
     Lua::new().context(|lua| {
         assert_eq!(
             lua.coerce_integer(Value::String(lua.create_string("1").unwrap()))
@@ -979,15 +989,9 @@ fn test_num_conversion() {
         assert_eq!(lua.load("1.0").eval::<i64>().unwrap(), 1);
         assert_eq!(lua.load("1.0").eval::<f64>().unwrap(), 1.0);
         #[cfg(not(rlua_lua51))]
-        assert_eq!(
-            lua.load("1.0").eval::<String>().unwrap().to_str().unwrap(),
-            "1.0"
-        );
+        assert_eq!(lua.load("1.0").eval::<String>().unwrap().to_str().unwrap(), "1.0");
         #[cfg(rlua_lua51)]
-        assert_eq!(
-            lua.load("1.0").eval::<String>().unwrap().to_str().unwrap(),
-            "1"
-        );
+        assert_eq!(lua.load("1.0").eval::<String>().unwrap().to_str().unwrap(), "1");
 
         assert_eq!(lua.load("1.5").eval::<i64>().unwrap(), 1);
         assert_eq!(lua.load("1.5").eval::<f64>().unwrap(), 1.5);
@@ -999,21 +1003,16 @@ fn test_num_conversion() {
         assert!(lua.unpack::<u64>(lua.pack(1u128 << 64).unwrap()).is_err());
         assert!(lua.load("math.huge").eval::<i64>().is_err());
 
-        assert_eq!(
-            lua.unpack::<f64>(lua.pack(f32::MAX).unwrap()).unwrap(),
-            f32::MAX as f64
-        );
+        assert_eq!(lua.unpack::<f64>(lua.pack(f32::MAX).unwrap()).unwrap(), f32::MAX as f64);
         assert!(lua.unpack::<f32>(lua.pack(f64::MAX).unwrap()).is_err());
 
-        assert_eq!(
-            lua.unpack::<i128>(lua.pack(1i128 << 64).unwrap()).unwrap(),
-            1i128 << 64
-        );
+        assert_eq!(lua.unpack::<i128>(lua.pack(1i128 << 64).unwrap()).unwrap(), 1i128 << 64);
     });
 }
 
 #[test]
-fn test_pcall_xpcall() {
+fn test_pcall_xpcall()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
 
@@ -1039,7 +1038,8 @@ fn test_pcall_xpcall() {
         assert!(r);
         assert_eq!(e, "foo");
 
-        // Make sure that the return values are correct on errors, and that error handling works
+        // Make sure that the return values are correct on errors, and that error
+        // handling works
 
         lua.load(
             r#"
@@ -1054,18 +1054,13 @@ fn test_pcall_xpcall() {
         .unwrap();
 
         assert_eq!(globals.get::<_, bool>("pcall_status").unwrap(), false);
-        assert_eq!(
-            globals.get::<_, String>("pcall_error").unwrap(),
-            "testerror"
-        );
+        assert_eq!(globals.get::<_, String>("pcall_error").unwrap(), "testerror");
 
         assert_eq!(globals.get::<_, bool>("xpcall_statusr").unwrap(), false);
-        assert_eq!(
-            globals.get::<_, String>("xpcall_error").unwrap(),
-            "testerror"
-        );
+        assert_eq!(globals.get::<_, String>("xpcall_error").unwrap(), "testerror");
 
-        // Make sure that weird xpcall error recursion at least doesn't cause unsafety or panics.
+        // Make sure that weird xpcall error recursion at least doesn't cause unsafety
+        // or panics.
         lua.load(
             r#"
                 function xpcall_recursion()
@@ -1083,17 +1078,22 @@ fn test_pcall_xpcall() {
 }
 
 #[test]
-fn test_recursive_mut_callback_error() {
+fn test_recursive_mut_callback_error()
+{
     Lua::new().context(|lua| {
         let mut v = Some(Box::new(123));
         let f = lua
-            .create_function_mut::<_, (), _>(move |lua, mutate: bool| {
-                if mutate {
+            .create_function_mut::<_, (), _>(move |lua, mutate : bool| {
+                if mutate
+                {
                     v = None;
-                } else {
+                }
+                else
+                {
                     // Produce a mutable reference
                     let r = v.as_mut().unwrap();
-                    // Whoops, this will recurse into the function and produce another mutable reference!
+                    // Whoops, this will recurse into the function and produce another mutable
+                    // reference!
                     lua.globals().get::<_, Function>("f")?.call::<_, ()>(true)?;
                     println!("Should not get here, mutable aliasing has occurred!");
                     println!("value at {:p}", r as *mut _);
@@ -1104,15 +1104,20 @@ fn test_recursive_mut_callback_error() {
             })
             .unwrap();
         lua.globals().set("f", f).unwrap();
-        match lua
-            .globals()
-            .get::<_, Function>("f")
-            .unwrap()
-            .call::<_, ()>(false)
+        match lua.globals().get::<_, Function>("f").unwrap().call::<_, ()>(false)
         {
-            Err(Error::CallbackError { ref cause, .. }) => match *cause.as_ref() {
-                Error::CallbackError { ref cause, .. } => match *cause.as_ref() {
-                    Error::RecursiveMutCallback { .. } => {}
+            Err(Error::CallbackError {
+                ref cause, ..
+            }) => match *cause.as_ref()
+            {
+                Error::CallbackError {
+                    ref cause, ..
+                } => match *cause.as_ref()
+                {
+                    Error::RecursiveMutCallback {
+                        ..
+                    } =>
+                    {},
                     ref other => panic!("incorrect result: {:?}", other),
                 },
                 ref other => panic!("incorrect result: {:?}", other),
@@ -1123,7 +1128,8 @@ fn test_recursive_mut_callback_error() {
 }
 
 #[test]
-fn test_set_metatable_nil() {
+fn test_set_metatable_nil()
+{
     Lua::new().context(|lua| {
         lua.load(
             r#"
@@ -1137,7 +1143,8 @@ fn test_set_metatable_nil() {
 }
 
 #[test]
-fn test_named_registry_value() {
+fn test_named_registry_value()
+{
     Lua::new().context(|lua| {
         lua.set_named_registry_value::<_, i32>("test", 42).unwrap();
         let f = lua
@@ -1150,23 +1157,29 @@ fn test_named_registry_value() {
         f.call::<_, ()>(()).unwrap();
 
         lua.unset_named_registry_value("test").unwrap();
-        match lua.named_registry_value("test").unwrap() {
-            Nil => {}
+        match lua.named_registry_value("test").unwrap()
+        {
+            Nil =>
+            {},
             val => panic!("registry value was not Nil, was {:?}", val),
         };
     });
 }
 
 #[test]
-fn test_registry_value() {
+fn test_registry_value()
+{
     Lua::new().context(|lua| {
         let mut r = Some(lua.create_registry_value::<i32>(42).unwrap());
         let f = lua
             .create_function_mut(move |lua, ()| {
-                if let Some(r) = r.take() {
+                if let Some(r) = r.take()
+                {
                     assert_eq!(lua.registry_value::<i32>(&r)?, 42);
                     lua.remove_registry_value(r).unwrap();
-                } else {
+                }
+                else
+                {
                     panic!();
                 }
                 Ok(())
@@ -1178,7 +1191,8 @@ fn test_registry_value() {
 }
 
 #[test]
-fn test_drop_registry_value() {
+fn test_drop_registry_value()
+{
     struct MyUserdata(Arc<()>);
 
     impl UserData for MyUserdata {}
@@ -1199,7 +1213,8 @@ fn test_drop_registry_value() {
 }
 
 #[test]
-fn test_lua_registry_ownership() {
+fn test_lua_registry_ownership()
+{
     Lua::new().context(|lua1| {
         Lua::new().context(|lua2| {
             let r1 = lua1.create_registry_value("hello").unwrap();
@@ -1214,12 +1229,15 @@ fn test_lua_registry_ownership() {
 }
 
 #[test]
-fn test_mismatched_registry_key() {
+fn test_mismatched_registry_key()
+{
     Lua::new().context(|lua1| {
         Lua::new().context(|lua2| {
             let r = lua1.create_registry_value("hello").unwrap();
-            match lua2.remove_registry_value(r) {
-                Err(Error::MismatchedRegistryKey) => {}
+            match lua2.remove_registry_value(r)
+            {
+                Err(Error::MismatchedRegistryKey) =>
+                {},
                 r => panic!("wrong result type for mismatched registry key, {:?}", r),
             };
         });
@@ -1227,7 +1245,8 @@ fn test_mismatched_registry_key() {
 }
 
 #[test]
-fn too_many_returns() {
+fn too_many_returns()
+{
     Lua::new().context(|lua| {
         let f = lua
             .create_function(|_, ()| Ok(Variadic::from_iter(1..1000000)))
@@ -1237,7 +1256,8 @@ fn too_many_returns() {
 }
 
 #[test]
-fn too_many_arguments() {
+fn too_many_arguments()
+{
     Lua::new().context(|lua| {
         lua.load("function test(...) end").exec().unwrap();
         let args = Variadic::from_iter(1..1000000);
@@ -1251,12 +1271,11 @@ fn too_many_arguments() {
 }
 
 #[test]
-fn too_many_recursions() {
+fn too_many_recursions()
+{
     Lua::new().context(|lua| {
         let f = lua
-            .create_function(move |lua, ()| {
-                lua.globals().get::<_, Function>("f")?.call::<_, ()>(())
-            })
+            .create_function(move |lua, ()| lua.globals().get::<_, Function>("f")?.call::<_, ()>(()))
             .unwrap();
         lua.globals().set("f", f).unwrap();
 
@@ -1270,7 +1289,8 @@ fn too_many_recursions() {
 }
 
 #[test]
-fn too_many_binds() {
+fn too_many_binds()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -1284,23 +1304,23 @@ fn too_many_binds() {
 
         let concat = globals.get::<_, Function>("f").unwrap();
         assert!(concat.bind(Variadic::from_iter(1..1000000)).is_err());
-        assert!(concat
-            .call::<_, ()>(Variadic::from_iter(1..1000000))
-            .is_err());
+        assert!(concat.call::<_, ()>(Variadic::from_iter(1..1000000)).is_err());
     });
 }
 
 #[test]
-fn large_args() {
+fn large_args()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
 
         globals
             .set(
                 "c",
-                lua.create_function(|_, args: Variadic<usize>| {
+                lua.create_function(|_, args : Variadic<usize>| {
                     let mut s = 0;
-                    for i in 0..args.len() {
+                    for i in 0..args.len()
+                    {
                         s += i;
                         assert_eq!(i, args[i]);
                     }
@@ -1310,7 +1330,7 @@ fn large_args() {
             )
             .unwrap();
 
-        let f: Function = lua
+        let f : Function = lua
             .load(
                 r#"
                     return function(...)
@@ -1321,20 +1341,18 @@ fn large_args() {
             .eval()
             .unwrap();
 
-        assert_eq!(
-            f.call::<_, usize>((0..100).collect::<Variadic<usize>>())
-                .unwrap(),
-            4950
-        );
+        assert_eq!(f.call::<_, usize>((0..100).collect::<Variadic<usize>>()).unwrap(), 4950);
     });
 }
 
 #[test]
-fn large_args_ref() {
+fn large_args_ref()
+{
     Lua::new().context(|lua| {
         let f = lua
-            .create_function(|_, args: Variadic<String>| {
-                for i in 0..args.len() {
+            .create_function(|_, args : Variadic<String>| {
+                for i in 0..args.len()
+                {
                     assert_eq!(args[i], i.to_string());
                 }
                 Ok(())
@@ -1347,9 +1365,10 @@ fn large_args_ref() {
 }
 
 #[test]
-fn chunk_env() {
+fn chunk_env()
+{
     Lua::new().context(|lua| {
-        let assert: Function = lua.globals().get("assert").unwrap();
+        let assert : Function = lua.globals().get("assert").unwrap();
 
         let env1 = lua.create_table().unwrap();
         env1.set("assert", assert.clone()).unwrap();
@@ -1400,7 +1419,8 @@ fn chunk_env() {
 
 #[cfg(not(rlua_lua51))]
 #[test]
-fn context_thread() {
+fn context_thread()
+{
     Lua::new().context(|lua_ctx| {
         let f = lua_ctx
             .load(
@@ -1417,7 +1437,8 @@ fn context_thread() {
 
 #[cfg(rlua_lua51)]
 #[test]
-fn context_thread_lua51() {
+fn context_thread_lua51()
+{
     Lua::new().context(|lua_ctx| {
         let f = lua_ctx
             .load(

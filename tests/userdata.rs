@@ -2,12 +2,11 @@
 use std::os::raw::c_int;
 use std::sync::Arc;
 
-use rlua::{
-    AnyUserData, ExternalError, Function, Lua, MetaMethod, String, UserData, UserDataMethods,
-};
+use rlua::{AnyUserData, ExternalError, Function, Lua, MetaMethod, String, UserData, UserDataMethods};
 
 #[test]
-fn test_user_data() {
+fn test_user_data()
+{
     struct UserData1(i64);
     struct UserData2(Box<i64>);
 
@@ -29,11 +28,14 @@ fn test_user_data() {
 }
 
 #[test]
-fn test_methods() {
+fn test_methods()
+{
     struct MyUserData(i64);
 
-    impl UserData for MyUserData {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+    impl UserData for MyUserData
+    {
+        fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+        {
             methods.add_method("get_value", |_, data, ()| Ok(data.0));
             methods.add_method_mut("set_value", |_, data, args| {
                 data.0 = args;
@@ -70,25 +72,29 @@ fn test_methods() {
 }
 
 #[test]
-fn test_metamethods() {
+fn test_metamethods()
+{
     #[derive(Copy, Clone)]
     struct MyUserData(i64);
 
-    impl UserData for MyUserData {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+    impl UserData for MyUserData
+    {
+        fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+        {
             methods.add_method("get", |_, data, ()| Ok(data.0));
-            methods.add_meta_function(
-                MetaMethod::Add,
-                |_, (lhs, rhs): (MyUserData, MyUserData)| Ok(MyUserData(lhs.0 + rhs.0)),
-            );
-            methods.add_meta_function(
-                MetaMethod::Sub,
-                |_, (lhs, rhs): (MyUserData, MyUserData)| Ok(MyUserData(lhs.0 - rhs.0)),
-            );
-            methods.add_meta_method(MetaMethod::Index, |_, data, index: String| {
-                if index.to_str()? == "inner" {
+            methods.add_meta_function(MetaMethod::Add, |_, (lhs, rhs) : (MyUserData, MyUserData)| {
+                Ok(MyUserData(lhs.0 + rhs.0))
+            });
+            methods.add_meta_function(MetaMethod::Sub, |_, (lhs, rhs) : (MyUserData, MyUserData)| {
+                Ok(MyUserData(lhs.0 - rhs.0))
+            });
+            methods.add_meta_method(MetaMethod::Index, |_, data, index : String| {
+                if index.to_str()? == "inner"
+                {
                     Ok(data.0)
-                } else {
+                }
+                else
+                {
                     Err("no such custom index".to_lua_err())
                 }
             });
@@ -99,20 +105,8 @@ fn test_metamethods() {
         let globals = lua.globals();
         globals.set("userdata1", MyUserData(7)).unwrap();
         globals.set("userdata2", MyUserData(3)).unwrap();
-        assert_eq!(
-            lua.load("userdata1 + userdata2")
-                .eval::<MyUserData>()
-                .unwrap()
-                .0,
-            10
-        );
-        assert_eq!(
-            lua.load("userdata1 - userdata2")
-                .eval::<MyUserData>()
-                .unwrap()
-                .0,
-            4
-        );
+        assert_eq!(lua.load("userdata1 + userdata2").eval::<MyUserData>().unwrap().0, 10);
+        assert_eq!(lua.load("userdata1 - userdata2").eval::<MyUserData>().unwrap().0, 4);
         assert_eq!(lua.load("userdata1:get()").eval::<i64>().unwrap(), 7);
         assert_eq!(lua.load("userdata2.inner").eval::<i64>().unwrap(), 3);
         assert!(lua.load("userdata2.nonexist_field").eval::<()>().is_err());
@@ -120,13 +114,17 @@ fn test_metamethods() {
 }
 
 #[test]
-fn test_gc_userdata() {
-    struct MyUserdata {
-        id: u8,
+fn test_gc_userdata()
+{
+    struct MyUserdata
+    {
+        id : u8,
     }
 
-    impl UserData for MyUserdata {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+    impl UserData for MyUserdata
+    {
+        fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+        {
             methods.add_method("access", |_, this, ()| {
                 assert!(this.id == 123);
                 Ok(())
@@ -136,7 +134,12 @@ fn test_gc_userdata() {
 
     Lua::new().context(|lua| {
         lua.globals()
-            .set("userdata", MyUserdata { id: 123 })
+            .set(
+                "userdata",
+                MyUserdata {
+                    id : 123
+                },
+            )
             .unwrap();
 
         assert!(lua
@@ -161,7 +164,8 @@ fn test_gc_userdata() {
 }
 
 #[test]
-fn detroys_userdata() {
+fn detroys_userdata()
+{
     struct MyUserdata(Arc<()>);
 
     impl UserData for MyUserdata {}
@@ -170,9 +174,7 @@ fn detroys_userdata() {
 
     let lua = Lua::new();
     lua.context(|lua| {
-        lua.globals()
-            .set("userdata", MyUserdata(rc.clone()))
-            .unwrap();
+        lua.globals().set("userdata", MyUserdata(rc.clone())).unwrap();
     });
 
     assert_eq!(Arc::strong_count(&rc), 2);
@@ -182,12 +184,12 @@ fn detroys_userdata() {
 
 #[cfg(rlua_lua54)]
 #[test]
-fn user_value() {
+fn user_value()
+{
     struct MyUserData;
-    impl UserData for MyUserData {
-        fn get_uvalues_count(&self) -> c_int {
-            2
-        }
+    impl UserData for MyUserData
+    {
+        fn get_uvalues_count(&self) -> c_int { 2 }
     }
 
     Lua::new().context(|lua| {
@@ -207,7 +209,8 @@ fn user_value() {
 
 #[cfg(rlua_lua53)]
 #[test]
-fn user_value() {
+fn user_value()
+{
     struct MyUserData;
     impl UserData for MyUserData {}
 
@@ -226,15 +229,16 @@ fn user_value() {
     });
 }
 #[test]
-fn test_functions() {
+fn test_functions()
+{
     struct MyUserData(i64);
 
-    impl UserData for MyUserData {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-            methods.add_function("get_value", |_, ud: AnyUserData| {
-                Ok(ud.borrow::<MyUserData>()?.0)
-            });
-            methods.add_function("set_value", |_, (ud, value): (AnyUserData, i64)| {
+    impl UserData for MyUserData
+    {
+        fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+        {
+            methods.add_function("get_value", |_, ud : AnyUserData| Ok(ud.borrow::<MyUserData>()?.0));
+            methods.add_function("set_value", |_, (ud, value) : (AnyUserData, i64)| {
                 ud.borrow_mut::<MyUserData>()?.0 = value;
                 Ok(())
             });

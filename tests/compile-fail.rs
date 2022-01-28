@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-fn run_mode(mode: &'static str) {
+fn run_mode(mode : &'static str)
+{
     let mut config = compiletest_rs::Config::default();
 
     config.mode = mode.parse().expect("Invalid mode");
@@ -12,6 +13,4 @@ fn run_mode(mode: &'static str) {
 }
 
 #[test]
-fn compile_test() {
-    run_mode("compile-fail");
-}
+fn compile_test() { run_mode("compile-fail"); }

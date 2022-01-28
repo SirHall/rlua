@@ -4,7 +4,8 @@ use rlua::Lua;
 // Lua 5.1 doesn't have hex escapes
 #[cfg(not(rlua_lua51))]
 #[test]
-fn byte_string_round_trip() {
+fn byte_string_round_trip()
+{
     Lua::new().context(|lua| {
         lua.load(
             r#"
@@ -23,33 +24,19 @@ fn byte_string_round_trip() {
         .unwrap();
 
         let globals = lua.globals();
-        let isi = globals
-            .get::<_, BString>("invalid_sequence_identifier")
-            .unwrap();
+        let isi = globals.get::<_, BString>("invalid_sequence_identifier").unwrap();
         assert_eq!(isi, [0xa0, 0xa1].as_ref());
-        let i2os2 = globals
-            .get::<_, BString>("invalid_2_octet_sequence_2nd")
-            .unwrap();
+        let i2os2 = globals.get::<_, BString>("invalid_2_octet_sequence_2nd").unwrap();
         assert_eq!(i2os2, [0xc3, 0x28].as_ref());
-        let i3os2 = globals
-            .get::<_, BString>("invalid_3_octet_sequence_2nd")
-            .unwrap();
+        let i3os2 = globals.get::<_, BString>("invalid_3_octet_sequence_2nd").unwrap();
         assert_eq!(i3os2, [0xe2, 0x28, 0xa1].as_ref());
-        let i3os3 = globals
-            .get::<_, BString>("invalid_3_octet_sequence_3rd")
-            .unwrap();
+        let i3os3 = globals.get::<_, BString>("invalid_3_octet_sequence_3rd").unwrap();
         assert_eq!(i3os3, [0xe2, 0x82, 0x28].as_ref());
-        let i4os2 = globals
-            .get::<_, BString>("invalid_4_octet_sequence_2nd")
-            .unwrap();
+        let i4os2 = globals.get::<_, BString>("invalid_4_octet_sequence_2nd").unwrap();
         assert_eq!(i4os2, [0xf0, 0x28, 0x8c, 0xbc].as_ref());
-        let i4os3 = globals
-            .get::<_, BString>("invalid_4_octet_sequence_3rd")
-            .unwrap();
+        let i4os3 = globals.get::<_, BString>("invalid_4_octet_sequence_3rd").unwrap();
         assert_eq!(i4os3, [0xf0, 0x90, 0x28, 0xbc].as_ref());
-        let i4os4 = globals
-            .get::<_, BString>("invalid_4_octet_sequence_4th")
-            .unwrap();
+        let i4os4 = globals.get::<_, BString>("invalid_4_octet_sequence_4th").unwrap();
         assert_eq!(i4os4, [0xf0, 0x28, 0x8c, 0x28].as_ref());
         let aas = globals.get::<_, BString>("an_actual_string").unwrap();
         assert_eq!(aas, b"Hello, world!".as_ref());
@@ -75,9 +62,7 @@ fn byte_string_round_trip() {
         globals
             .set::<_, &BStr>("bstr_invalid_4_octet_sequence_4th", i4os4.as_ref())
             .unwrap();
-        globals
-            .set::<_, &BStr>("bstr_an_actual_string", aas.as_ref())
-            .unwrap();
+        globals.set::<_, &BStr>("bstr_an_actual_string", aas.as_ref()).unwrap();
 
         lua.load(
             r#"
@@ -115,9 +100,7 @@ fn byte_string_round_trip() {
         globals
             .set::<_, BString>("bstring_invalid_4_octet_sequence_4th", i4os4)
             .unwrap();
-        globals
-            .set::<_, BString>("bstring_an_actual_string", aas)
-            .unwrap();
+        globals.set::<_, BString>("bstring_an_actual_string", aas).unwrap();
 
         lua.load(
             r#"
@@ -137,7 +120,8 @@ fn byte_string_round_trip() {
 }
 
 #[test]
-fn byte_string_round_trip_dec() {
+fn byte_string_round_trip_dec()
+{
     Lua::new().context(|lua| {
         lua.load(
             r#"
@@ -156,33 +140,19 @@ fn byte_string_round_trip_dec() {
         .unwrap();
 
         let globals = lua.globals();
-        let isi = globals
-            .get::<_, BString>("invalid_sequence_identifier")
-            .unwrap();
+        let isi = globals.get::<_, BString>("invalid_sequence_identifier").unwrap();
         assert_eq!(isi, [0xa0, 0xa1].as_ref());
-        let i2os2 = globals
-            .get::<_, BString>("invalid_2_octet_sequence_2nd")
-            .unwrap();
+        let i2os2 = globals.get::<_, BString>("invalid_2_octet_sequence_2nd").unwrap();
         assert_eq!(i2os2, [0xc3, 0x28].as_ref());
-        let i3os2 = globals
-            .get::<_, BString>("invalid_3_octet_sequence_2nd")
-            .unwrap();
+        let i3os2 = globals.get::<_, BString>("invalid_3_octet_sequence_2nd").unwrap();
         assert_eq!(i3os2, [0xe2, 0x28, 0xa1].as_ref());
-        let i3os3 = globals
-            .get::<_, BString>("invalid_3_octet_sequence_3rd")
-            .unwrap();
+        let i3os3 = globals.get::<_, BString>("invalid_3_octet_sequence_3rd").unwrap();
         assert_eq!(i3os3, [0xe2, 0x82, 0x28].as_ref());
-        let i4os2 = globals
-            .get::<_, BString>("invalid_4_octet_sequence_2nd")
-            .unwrap();
+        let i4os2 = globals.get::<_, BString>("invalid_4_octet_sequence_2nd").unwrap();
         assert_eq!(i4os2, [0xf0, 0x28, 0x8c, 0xbc].as_ref());
-        let i4os3 = globals
-            .get::<_, BString>("invalid_4_octet_sequence_3rd")
-            .unwrap();
+        let i4os3 = globals.get::<_, BString>("invalid_4_octet_sequence_3rd").unwrap();
         assert_eq!(i4os3, [0xf0, 0x90, 0x28, 0xbc].as_ref());
-        let i4os4 = globals
-            .get::<_, BString>("invalid_4_octet_sequence_4th")
-            .unwrap();
+        let i4os4 = globals.get::<_, BString>("invalid_4_octet_sequence_4th").unwrap();
         assert_eq!(i4os4, [0xf0, 0x28, 0x8c, 0x28].as_ref());
         let aas = globals.get::<_, BString>("an_actual_string").unwrap();
         assert_eq!(aas, b"Hello, world!".as_ref());
@@ -208,9 +178,7 @@ fn byte_string_round_trip_dec() {
         globals
             .set::<_, &BStr>("bstr_invalid_4_octet_sequence_4th", i4os4.as_ref())
             .unwrap();
-        globals
-            .set::<_, &BStr>("bstr_an_actual_string", aas.as_ref())
-            .unwrap();
+        globals.set::<_, &BStr>("bstr_an_actual_string", aas.as_ref()).unwrap();
 
         lua.load(
             r#"
@@ -248,9 +216,7 @@ fn byte_string_round_trip_dec() {
         globals
             .set::<_, BString>("bstring_invalid_4_octet_sequence_4th", i4os4)
             .unwrap();
-        globals
-            .set::<_, BString>("bstring_an_actual_string", aas)
-            .unwrap();
+        globals.set::<_, BString>("bstring_an_actual_string", aas).unwrap();
 
         lua.load(
             r#"

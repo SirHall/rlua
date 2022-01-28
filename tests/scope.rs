@@ -4,7 +4,8 @@ use std::rc::Rc;
 use rlua::{Error, Function, Lua, MetaMethod, String, UserData, UserDataMethods};
 
 #[test]
-fn scope_func() {
+fn scope_func()
+{
     Lua::new().context(|lua| {
         let rc = Rc::new(Cell::new(0));
         lua.scope(|scope| {
@@ -22,24 +23,26 @@ fn scope_func() {
         assert_eq!(rc.get(), 42);
         assert_eq!(Rc::strong_count(&rc), 1);
 
-        match lua
-            .globals()
-            .get::<_, Function>("bad")
-            .unwrap()
-            .call::<_, ()>(())
+        match lua.globals().get::<_, Function>("bad").unwrap().call::<_, ()>(())
         {
-            Err(Error::CallbackError { .. }) => {}
+            Err(Error::CallbackError {
+                ..
+            }) =>
+            {},
             r => panic!("improper return for destructed function: {:?}", r),
         };
     });
 }
 
 #[test]
-fn scope_drop() {
+fn scope_drop()
+{
     Lua::new().context(|lua| {
         struct MyUserdata(Rc<()>);
-        impl UserData for MyUserdata {
-            fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        impl UserData for MyUserdata
+        {
+            fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+            {
                 methods.add_method("method", |_, _, ()| Ok(()));
             }
         }
@@ -48,26 +51,26 @@ fn scope_drop() {
 
         lua.scope(|scope| {
             lua.globals()
-                .set(
-                    "test",
-                    scope
-                        .create_static_userdata(MyUserdata(rc.clone()))
-                        .unwrap(),
-                )
+                .set("test", scope.create_static_userdata(MyUserdata(rc.clone())).unwrap())
                 .unwrap();
             assert_eq!(Rc::strong_count(&rc), 2);
         });
         assert_eq!(Rc::strong_count(&rc), 1);
 
-        match lua.load("test:method()").exec() {
-            Err(Error::CallbackError { .. }) => {}
+        match lua.load("test:method()").exec()
+        {
+            Err(Error::CallbackError {
+                ..
+            }) =>
+            {},
             r => panic!("improper return for destructed userdata: {:?}", r),
         };
     });
 }
 
 #[test]
-fn scope_capture() {
+fn scope_capture()
+{
     let lua = Lua::new();
 
     let mut i = 0;
@@ -87,7 +90,8 @@ fn scope_capture() {
 }
 
 #[test]
-fn outer_lua_access() {
+fn outer_lua_access()
+{
     Lua::new().context(|lua| {
         let table = lua.create_table().unwrap();
         lua.scope(|scope| {
@@ -105,11 +109,14 @@ fn outer_lua_access() {
 }
 
 #[test]
-fn scope_userdata_methods() {
+fn scope_userdata_methods()
+{
     struct MyUserData<'a>(&'a Cell<i64>);
 
-    impl<'a> UserData for MyUserData<'a> {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+    impl<'a> UserData for MyUserData<'a>
+    {
+        fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+        {
             methods.add_method("inc", |_, data, ()| {
                 data.0.set(data.0.get() + 1);
                 Ok(())
@@ -126,7 +133,7 @@ fn scope_userdata_methods() {
 
     let i = Cell::new(42);
     lua.context(|lua| {
-        let f: Function = lua
+        let f : Function = lua
             .load(
                 r#"
                     function(u)
@@ -150,11 +157,14 @@ fn scope_userdata_methods() {
 }
 
 #[test]
-fn scope_userdata_functions() {
+fn scope_userdata_functions()
+{
     struct MyUserData<'a>(&'a i64);
 
-    impl<'a> UserData for MyUserData<'a> {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+    impl<'a> UserData for MyUserData<'a>
+    {
+        fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+        {
             methods.add_meta_function(MetaMethod::Add, |lua, ()| {
                 let globals = lua.globals();
                 globals.set("i", globals.get::<_, i64>("i")? + 1)?;
@@ -194,11 +204,14 @@ fn scope_userdata_functions() {
 }
 
 #[test]
-fn scope_userdata_mismatch() {
+fn scope_userdata_mismatch()
+{
     struct MyUserData<'a>(&'a Cell<i64>);
 
-    impl<'a> UserData for MyUserData<'a> {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+    impl<'a> UserData for MyUserData<'a>
+    {
+        fn add_methods<'lua, M : UserDataMethods<'lua, Self>>(methods : &mut M)
+        {
             methods.add_method("inc", |_, data, ()| {
                 data.0.set(data.0.get() + 1);
                 Ok(())
@@ -225,16 +238,21 @@ fn scope_userdata_mismatch() {
         let a = Cell::new(1);
         let b = Cell::new(1);
 
-        let okay: Function = lua.globals().get("okay").unwrap();
-        let bad: Function = lua.globals().get("bad").unwrap();
+        let okay : Function = lua.globals().get("okay").unwrap();
+        let bad : Function = lua.globals().get("bad").unwrap();
 
         lua.scope(|scope| {
             let au = scope.create_nonstatic_userdata(MyUserData(&a)).unwrap();
             let bu = scope.create_nonstatic_userdata(MyUserData(&b)).unwrap();
             assert!(okay.call::<_, ()>((au.clone(), bu.clone())).is_ok());
-            match bad.call::<_, ()>((au, bu)) {
-                Err(Error::CallbackError { ref cause, .. }) => match *cause.as_ref() {
-                    Error::UserDataTypeMismatch => {}
+            match bad.call::<_, ()>((au, bu))
+            {
+                Err(Error::CallbackError {
+                    ref cause, ..
+                }) => match *cause.as_ref()
+                {
+                    Error::UserDataTypeMismatch =>
+                    {},
                     ref other => panic!("wrong error type {:?}", other),
                 },
                 Err(other) => panic!("wrong error type {:?}", other),

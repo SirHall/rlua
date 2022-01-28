@@ -1,7 +1,8 @@
 use rlua::{Function, Lua, String};
 
 #[test]
-fn test_function() {
+fn test_function()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -20,7 +21,8 @@ fn test_function() {
 }
 
 #[test]
-fn test_bind() {
+fn test_bind()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(
@@ -41,15 +43,13 @@ fn test_bind() {
         concat = concat.bind("foo").unwrap();
         concat = concat.bind("bar").unwrap();
         concat = concat.bind(("baz", "baf")).unwrap();
-        assert_eq!(
-            concat.call::<_, String>(("hi", "wut")).unwrap(),
-            "foobarbazbafhiwut"
-        );
+        assert_eq!(concat.call::<_, String>(("hi", "wut")).unwrap(), "foobarbazbafhiwut");
     });
 }
 
 #[test]
-fn test_rust_function() {
+fn test_rust_function()
+{
     Lua::new().context(|lua| {
         let globals = lua.globals();
         lua.load(

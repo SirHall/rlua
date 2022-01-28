@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 
 use bitflags::bitflags;
 use libc;
+use serde::Serialize;
 
 use crate::context::Context;
 use crate::error::Result;
@@ -452,6 +453,8 @@ impl Default for Lua {
         Lua::new()
     }
 }
+
+// impl Serialize for Lua {}
 
 // Data associated with the main lua_State via lua_getextraspace.
 pub(crate) struct ExtraData {

@@ -272,12 +272,18 @@ pub unsafe fn push_userdata_uv<T>(
         uvalues_count == 1,
         "This version of Lua only supports one user value."
     );
+
     let ud = protect_lua_closure(state, 0, 1, move |state| {
+        // Allocate enough space for the new instance of T user data
         ffi::lua_newuserdata(state, mem::size_of::<T>()) as *mut T
     })?;
+
+    // Move our new user data value into the space allocated
     ptr::write(ud, t);
+
     Ok(())
 }
+
 pub unsafe fn get_userdata<T>(state: *mut ffi::lua_State, index: c_int) -> *mut T {
     let ud = ffi::lua_touserdata(state, index) as *mut T;
     rlua_debug_assert!(!ud.is_null(), "userdata pointer is null");

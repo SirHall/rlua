@@ -35,7 +35,7 @@ bstr = {version = "0.2", features = ["std"], default_features = false }
 rlua-lua54-sys = { path = "./crates/rlua-lua54-sys", optional = true }
 rlua-lua53-sys = { path = "./crates/rlua-lua53-sys", optional = true }
 rlua-lua51-sys = { path = "./crates/rlua-lua51-sys", optional = true }
-
+serde = "1.0.136"
 
 [dev-dependencies]
 rustyline = "6.0"

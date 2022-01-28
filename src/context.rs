@@ -784,12 +784,15 @@ impl<'lua> Context<'lua> {
                     args.push_front(context.pop_value());
                 }
 
+                // Get the callback userdata type
                 let func = get_userdata::<Callback>(state, ffi::lua_upvalueindex(1));
 
+                // Call the function, retreiving the results
                 let results = (*func)(context, args)?;
                 let nresults = results.len() as c_int;
 
                 check_stack(state, nresults)?;
+                // Push the results onto the Lua stack, returning the values
                 for r in results {
                     context.push_value(r)?;
                 }
@@ -802,6 +805,7 @@ impl<'lua> Context<'lua> {
             let _sg = StackGuard::new(self.state);
             assert_stack(self.state, 4);
 
+            // Push func into the space allocated for it
             push_userdata_uv::<Callback>(self.state, func, 1)?;
 
             ffi::lua_pushlightuserdata(
@@ -812,6 +816,7 @@ impl<'lua> Context<'lua> {
             ffi::lua_setmetatable(self.state, -2);
 
             protect_lua_closure(self.state, 1, 1, |state| {
+                // The function we actually push to Lua is a wrapper that calls our Callback instance which refers to our original function
                 ffi::lua_pushcclosure(state, Some(call_callback), 1);
             })?;
 

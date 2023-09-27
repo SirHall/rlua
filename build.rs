@@ -12,6 +12,13 @@ fn main() {
         lua_version_features += 1;
     }
 
+    #[cfg(feature = "builtin-lua53-eris")]
+    {
+        println!("cargo:rustc-cfg=rlua_lua53");
+        println!("cargo:rustc-cfg=rlua_eris");
+        lua_version_features += 1;
+    }
+
     #[cfg(feature = "builtin-lua51")]
     {
         println!("cargo:rustc-cfg=rlua_lua51");

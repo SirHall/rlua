@@ -45,7 +45,9 @@ mod macros;
 
 #[cfg(rlua_lua51)]
 extern crate rlua_lua51_sys as ffi;
-#[cfg(rlua_lua53)]
+#[cfg(all(rlua_lua53, rlua_eris))]
+extern crate rlua_lua53_eris as ffi;
+#[cfg(all(rlua_lua53, not(rlua_eris)))]
 extern crate rlua_lua53_sys as ffi;
 #[cfg(rlua_lua54)]
 extern crate rlua_lua54_sys as ffi;
@@ -57,6 +59,7 @@ mod hook;
 mod lua;
 mod markers;
 mod multi;
+mod persistence;
 mod scope;
 mod string;
 mod table;

@@ -17,6 +17,7 @@ circle-ci = { repository = "amethyst/rlua", branch = "master" }
 default=["builtin-lua54"]
 builtin-lua54=["rlua-lua54-sys"]
 builtin-lua53=["rlua-lua53-sys"]
+builtin-lua53-eris=["rlua-lua53-eris"]
 builtin-lua51=["rlua-lua51-sys"]
 
 system-lua54=["rlua-lua54-sys", "rlua-lua54-sys/lua54-pkg-config"]
@@ -25,7 +26,7 @@ system-lua51=["rlua-lua51-sys", "rlua-lua51-sys/lua51-pkg-config"]
 system-luajit=["rlua-lua51-sys", "rlua-lua51-sys/luajit-pkg-config"]
 
 # Remove Lua's os lib
-lua-no-oslib=["rlua-lua54-sys/lua-no-oslib","rlua-lua53-sys/lua-no-oslib","rlua-lua51-sys/lua-no-oslib"]
+lua-no-oslib=["rlua-lua54-sys/lua-no-oslib","rlua-lua53-sys/lua-no-oslib","rlua-lua53-eris/lua-no-oslib","rlua-lua51-sys/lua-no-oslib"]
 
 # Enabled functions from the math module that have been deprecated
 lua-compat-mathlib = []
@@ -38,6 +39,7 @@ bitflags = { version = "1.0.4" }
 bstr = {version = "0.2", features = ["std"], default_features = false }
 rlua-lua54-sys = { version = "0.1.6", optional = true }
 rlua-lua53-sys = { version = "0.1.6", optional = true }
+rlua-lua53-eris = { path = "./crates/rlua-lua53-eris", optional = true }
 rlua-lua51-sys = { version = "0.1.6", optional = true }
 
 

@@ -59,7 +59,6 @@ mod hook;
 mod lua;
 mod markers;
 mod multi;
-mod persistence;
 mod scope;
 mod string;
 mod table;

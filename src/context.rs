@@ -901,6 +901,58 @@ impl<'lua> Context<'lua> {
             }
         }
     }
+
+    #[cfg(rlua_eris)]
+    pub fn persist(self, perms: Table<'lua>, value: Value<'lua>) -> Result<String<'lua>> {
+        let persisted_state = unsafe {
+            // TODO: Check that there is enough stack space for to push these on
+            self.push_value(value)?;
+            self.push_value(Value::Table(perms))?;
+
+            // Push value and perms onto stack, then persist
+
+            // TODO: Error handling
+            ffi::eris_persist(self.state, -2, -1);
+
+            // TODO: Don't pop unless a new value has been pushed
+            let persisted = self.pop_value();
+
+            self.pop_value();
+            self.pop_value();
+
+            // TODO: Assert that our stack size is the same as prior
+
+            persisted
+        };
+
+        String::<'lua>::from_lua(persisted_state, self)
+    }
+
+    #[cfg(rlua_eris)]
+    pub fn unpersist(self, uperms: Table<'lua>, value: String<'lua>) -> Result<Value<'lua>> {
+        let unpersisted_state = unsafe {
+            // TODO: Check that there is enough stack space for to push these on
+            self.push_value(Value::String(value))?;
+            self.push_value(Value::Table(uperms))?;
+
+            // Push value and perms onto stack, then persist
+
+            // TODO: Error handling
+            ffi::eris_unpersist(self.state, -4, -2);
+
+            // TODO: Don't pop unless a new value has been pushed
+            let unpersisted = self.pop_value();
+
+            self.pop_value();
+            self.pop_value();
+
+            // TODO: Assert that our stack size is the same as prior
+
+            unpersisted
+        };
+
+        Ok(unpersisted_state)
+    }
 }
 
 /// Returned from [`Context::load`] and is used to finalize loading and executing Lua main chunks.
